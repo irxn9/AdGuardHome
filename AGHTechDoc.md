@@ -56,6 +56,7 @@ Contents:
 	* API: Get filtering parameters
 	* API: Set filtering parameters
 	* API: Set URL parameters
+	* API: Domain Check
 * Log-in page
 	* API: Log in
 	* API: Log out
@@ -1349,6 +1350,23 @@ Request:
 Response:
 
 	200 OK
+
+
+### API: Domain Check
+
+Check if host name is filtered.
+
+Request:
+
+	GET /control/filtering/check_host?name=hostname
+
+Response:
+
+	200 OK
+
+	{
+	filtered: true | false
+	}
 
 
 ## Log-in page
