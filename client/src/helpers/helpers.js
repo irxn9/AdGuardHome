@@ -33,14 +33,12 @@ export const formatTime = (time) => {
     return dateFormat(parsedTime, DEFAULT_TIME_FORMAT);
 };
 
-export const formatDateTime = (dateTime, options = DEFAULT_DATE_FORMAT_OPTIONS) => {
-    const currentLanguage = i18n.languages[0] || DEFAULT_LANGUAGE;
 /**
  * @param string The date to format
  * @returns string Returns the date and time in the format DD/MM/YYYY, HH:mm
  */
-export const formatDateTime = (dateTime) => {
-    const currentLanguage = i18n.languages[0] || 'en';
+export const formatDateTime = (dateTime, options = DEFAULT_DATE_FORMAT_OPTIONS) => {
+    const currentLanguage = i18n.languages[0] || DEFAULT_LANGUAGE;
     const parsedTime = dateParse(dateTime);
 
     return parsedTime.toLocaleString(currentLanguage, options);
@@ -141,7 +139,7 @@ export const normalizeFilteringStatus = (filteringStatus) => {
                 id,
                 url,
                 enabled,
-                lastUpdated: last_updated ? formatDateTime(last_updated) : '–',
+                lastUpdated: last_updated || null,
                 name,
                 rulesCount: rules_count,
             };

@@ -47,12 +47,7 @@ class Filters extends Component {
         }
     };
 
-    getTimeCell = ({ value }) => (
-        <div className="logs__row">
-            <span className="logs__text" title={formatDetailedDateTime(value)}>
-                {formatDetailedDateTime(value)}
-            </span>
-        </div>);
+    getDateCell = row => CellWrap(row, formatDetailedDateTime);
 
     columns = [
         {
@@ -97,7 +92,7 @@ class Filters extends Component {
             accessor: 'lastUpdated',
             className: 'text-center',
             minWidth: 150,
-            Cell: this.getTimeCell,
+            Cell: this.getDateCell,
         },
         {
             Header: <Trans>actions_table_header</Trans>,
