@@ -34,6 +34,7 @@ type clientHostJSON struct {
 type clientListJSON struct {
 	Clients     []clientJSON     `json:"clients"`
 	AutoClients []clientHostJSON `json:"auto_clients"`
+	Tags        []string         `json:"supported_tags"`
 }
 
 // respond with information about configured clients
@@ -71,6 +72,8 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http
 		data.AutoClients = append(data.AutoClients, cj)
 	}
 	clients.lock.Unlock()
+
+	data.Tags = clientTags
 
 	w.Header().Set("Content-Type", "application/json")
 	e := json.NewEncoder(w).Encode(data)

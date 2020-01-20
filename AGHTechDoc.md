@@ -699,10 +699,8 @@ Response:
 			}
 		}
 	]
+	supported_tags: ["...", ...]
 	}
-
-Supported tags:
-* by device type: pc, phone, printer
 
 Supported keys for `whois_info`: orgname, country, city.
 
