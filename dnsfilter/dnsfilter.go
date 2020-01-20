@@ -266,33 +266,7 @@ func (d *Dnsfilter) CheckHostRules(host string, qtype uint16, setts *RequestFilt
 		return Result{}, nil
 	}
 
-	return d.matchHost(host, qtype)
-}
-
-func clientTagMatch(ruleTags, clientTags []string) bool {
-	if len(ruleTags) == 0 {
-		return true
-	}
-
-	if len(clientTags) == 0 {
-		return false
-	}
-
-	iRule := 0
-	iClient := 0
-	for iRule != len(ruleTags) && iClient != len(clientTags) {
-		r := strings.Compare(ruleTags[iRule], clientTags[iClient])
-		if r == 0 {
-			log.Debug("Filter: matched rule by ctag '%s'", ruleTags[iRule])
-			return true
-		} else if r < 0 {
-			iRule++
-		} else {
-			iClient++
-		}
-	}
-
-	return false
+	return d.matchHost(host, qtype, setts.ClientTags)
 }
 
 // CheckHost tries to match the host against filtering rules,
@@ -314,11 +288,11 @@ func (d *Dnsfilter) CheckHost(host string, qtype uint16, setts *RequestFiltering
 
 	// try filter lists first
 	if setts.FilteringEnabled {
-		result, err = d.matchHost(host, qtype)
+		result, err = d.matchHost(host, qtype, setts.ClientTags)
 		if err != nil {
 			return result, err
 		}
-		if result.Reason.Matched() && clientTagMatch(result.clientTags, setts.ClientTags) {
+		if result.Reason.Matched() {
 			return result, nil
 		}
 	}
@@ -503,14 +477,14 @@ func (d *Dnsfilter) initFiltering(filters map[int]string) error {
 }
 
 // matchHost is a low-level way to check only if hostname is filtered by rules, skipping expensive safebrowsing and parental lookups
-func (d *Dnsfilter) matchHost(host string, qtype uint16) (Result, error) {
+func (d *Dnsfilter) matchHost(host string, qtype uint16, ctags []string) (Result, error) {
 	d.engineLock.RLock()
 	defer d.engineLock.RUnlock()
 	if d.filteringEngine == nil {
 		return Result{}, nil
 	}
 
-	frules, ok := d.filteringEngine.Match(host)
+	frules, ok := d.filteringEngine.MatchWithClientTags(host, ctags)
 	if !ok {
 		return Result{}, nil
 	}
@@ -534,7 +508,6 @@ func (d *Dnsfilter) matchHost(host string, qtype uint16) (Result, error) {
 				res.Reason = NotFilteredWhiteList
 				res.IsFiltered = false
 			}
-			res.clientTags = netRule.GetClientTags()
 			return res, nil
 
 		} else if hostRule, ok := rule.(*rules.HostRule); ok {
