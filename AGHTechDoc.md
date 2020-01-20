@@ -1305,6 +1305,17 @@ Response:
 			}
 			...
 		],
+		"whitelist_filters":[
+			{
+			"id":1
+			"enabled":true,
+			"url":"https://...",
+			"name":"...",
+			"rules_count":1234,
+			"last_updated":"2019-09-04T18:29:30+00:00",
+			}
+			...
+		],
 		"user_rules":["...", ...]
 	}
 
