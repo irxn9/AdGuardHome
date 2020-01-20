@@ -139,7 +139,7 @@ export const normalizeFilteringStatus = (filteringStatus) => {
                 id,
                 url,
                 enabled,
-                lastUpdated: last_updated || null,
+                lastUpdated: last_updated,
                 name,
                 rulesCount: rules_count,
             };

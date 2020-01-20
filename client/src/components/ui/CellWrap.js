@@ -2,6 +2,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 const CellWrap = ({ value }, formatValue, formatTitle = formatValue) => {
+    if (!value) {
+        return '–';
+    }
     const cellValue = typeof formatValue === 'function' ? formatValue(value) : value;
     const cellTitle = typeof formatTitle === 'function' ? formatTitle(value) : value;
 
