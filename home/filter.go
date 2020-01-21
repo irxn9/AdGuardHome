@@ -25,9 +25,11 @@ var (
 )
 
 func initFiltering() {
-	loadFilters()
+	loadFilters(config.Filters)
+	loadFilters(config.WhitelistFilters)
 	deduplicateFilters()
 	updateUniqueFilterID(config.Filters)
+	updateUniqueFilterID(config.WhitelistFilters)
 }
 
 func startFiltering() {
@@ -54,6 +56,7 @@ type filter struct {
 	RulesCount  int       `yaml:"-"`
 	LastUpdated time.Time `yaml:"-"`
 	checksum    uint32    // checksum of the file data
+	white       bool
 
 	dnsfilter.Filter `yaml:",inline"`
 }
@@ -100,13 +103,25 @@ func filterEnable(url string, enable bool) bool {
 func filterExists(url string) bool {
 	r := false
 	config.RLock()
-	for i := range config.Filters {
-		if config.Filters[i].URL == url {
+	r = filterExistsNoLock(url)
+	config.RUnlock()
+	return r
+}
+
+func filterExistsNoLock(url string) bool {
+	r := false
+	for _, f := range config.Filters {
+		if f.URL == url {
 			r = true
 			break
 		}
 	}
-	config.RUnlock()
+	for _, f := range config.WhitelistFilters {
+		if f.URL == url {
+			r = true
+			break
+		}
+	}
 	return r
 }
 
@@ -114,25 +129,26 @@ func filterExists(url string) bool {
 // Return FALSE if a filter with this URL exists
 func filterAdd(f filter) bool {
 	config.Lock()
+	defer config.Unlock()
 
 	// Check for duplicates
-	for i := range config.Filters {
-		if config.Filters[i].URL == f.URL {
-			config.Unlock()
-			return false
-		}
+	if filterExistsNoLock(f.URL) {
+		return false
 	}
 
-	config.Filters = append(config.Filters, f)
-	config.Unlock()
+	if f.white {
+		config.WhitelistFilters = append(config.WhitelistFilters, f)
+	} else {
+		config.Filters = append(config.Filters, f)
+	}
 	return true
 }
 
 // Load filters from the disk
 // And if any filter has zero ID, assign a new one
-func loadFilters() {
-	for i := range config.Filters {
-		filter := &config.Filters[i] // otherwise we're operating on a copy
+func loadFilters(array []filter) {
+	for i := range array {
+		filter := &array[i] // otherwise we're operating on a copy
 		if filter.ID == 0 {
 			filter.ID = assignUniqueFilterID()
 		}

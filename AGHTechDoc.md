@@ -55,6 +55,7 @@ Contents:
 	* Filters update mechanism
 	* API: Get filtering parameters
 	* API: Set filtering parameters
+	* API: Add Filter
 	* API: Set URL parameters
 * Log-in page
 	* API: Log in
@@ -1319,6 +1320,9 @@ Response:
 		"user_rules":["...", ...]
 	}
 
+For both arrays `filters` and `whitelist_filters` there are unique values: id, url.
+ID for each filter is assigned by Server - it's used for file names.
+
 
 ### API: Set filtering parameters
 
@@ -1329,6 +1333,23 @@ Request:
 	{
 		"enabled": true | false
 		"interval": 0 | 1 | 12 | 1*24 || 3*24 || 7*24
+	}
+
+Response:
+
+	200 OK
+
+
+### API: Add Filter
+
+Request:
+
+	POST /control/filtering/add_url
+
+	{
+		"name": "..."
+		"url": "..."
+		"whitelist": true
 	}
 
 Response:

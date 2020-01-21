@@ -26,8 +26,9 @@ func IsValidURL(rawurl string) bool {
 }
 
 type filterAddJSON struct {
-	Name string `json:"name"`
-	URL  string `json:"url"`
+	Name      string `json:"name"`
+	URL       string `json:"url"`
+	Whitelist bool   `json:"whitelist"`
 }
 
 func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
@@ -54,6 +55,7 @@ func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
 		Enabled: true,
 		URL:     fj.URL,
 		Name:    fj.Name,
+		white:   fj.Whitelist,
 	}
 	f.ID = assignUniqueFilterID()
 
@@ -80,7 +82,6 @@ func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// URL is deemed valid, append it to filters, update config, write new filter file and tell dns to reload it
-	// TODO: since we directly feed filters in-memory, revisit if writing configs is always necessary
 	if !filterAdd(f) {
 		httpError(w, http.StatusBadRequest, "Filter URL already added -- %s", f.URL)
 		return
@@ -202,10 +203,27 @@ type filterJSON struct {
 }
 
 type filteringConfig struct {
-	Enabled   bool         `json:"enabled"`
-	Interval  uint32       `json:"interval"` // in hours
-	Filters   []filterJSON `json:"filters"`
-	UserRules []string     `json:"user_rules"`
+	Enabled          bool         `json:"enabled"`
+	Interval         uint32       `json:"interval"` // in hours
+	Filters          []filterJSON `json:"filters"`
+	WhitelistFilters []filterJSON `json:"whitelist_filters"`
+	UserRules        []string     `json:"user_rules"`
+}
+
+func filterToJSON(f filter) filterJSON {
+	fj := filterJSON{
+		ID:         f.ID,
+		Enabled:    f.Enabled,
+		URL:        f.URL,
+		Name:       f.Name,
+		RulesCount: uint32(f.RulesCount),
+	}
+
+	if !f.LastUpdated.IsZero() {
+		fj.LastUpdated = f.LastUpdated.Format(time.RFC3339)
+	}
+
+	return fj
 }
 
 // Get filtering configuration
@@ -215,19 +233,12 @@ func handleFilteringStatus(w http.ResponseWriter, r *http.Request) {
 	resp.Enabled = config.DNS.FilteringEnabled
 	resp.Interval = config.DNS.FiltersUpdateIntervalHours
 	for _, f := range config.Filters {
-		fj := filterJSON{
-			ID:         f.ID,
-			Enabled:    f.Enabled,
-			URL:        f.URL,
-			Name:       f.Name,
-			RulesCount: uint32(f.RulesCount),
-		}
-
-		if !f.LastUpdated.IsZero() {
-			fj.LastUpdated = f.LastUpdated.Format(time.RFC3339)
-		}
-
+		fj := filterToJSON(f)
 		resp.Filters = append(resp.Filters, fj)
+	}
+	for _, f := range config.WhitelistFilters {
+		fj := filterToJSON(f)
+		resp.WhitelistFilters = append(resp.WhitelistFilters, fj)
 	}
 	resp.UserRules = config.UserRules
 	config.RUnlock()
