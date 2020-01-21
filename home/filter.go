@@ -538,19 +538,36 @@ func (filter *filter) LastTimeUpdated() time.Time {
 }
 
 func enableFilters(async bool) {
-	var filters map[int]string
+	var filters []dnsfilter.Filter
 	if config.DNS.FilteringEnabled {
 		// convert array of filters
-		filters = make(map[int]string)
 
 		userFilter := userFilter()
-		filters[int(userFilter.ID)] = string(userFilter.Data)
+		f := dnsfilter.Filter{
+			ID:   userFilter.ID,
+			Data: userFilter.Data,
+		}
+		filters = append(filters, f)
 
 		for _, filter := range config.Filters {
 			if !filter.Enabled {
 				continue
 			}
-			filters[int(filter.ID)] = filter.Path()
+			f := dnsfilter.Filter{
+				ID:       filter.ID,
+				FilePath: filter.Path(),
+			}
+			filters = append(filters, f)
+		}
+		for _, filter := range config.WhitelistFilters {
+			if !filter.Enabled {
+				continue
+			}
+			f := dnsfilter.Filter{
+				ID:       filter.ID,
+				FilePath: filter.Path(),
+			}
+			filters = append(filters, f)
 		}
 	}
 

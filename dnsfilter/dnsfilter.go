@@ -72,7 +72,7 @@ type Stats struct {
 
 // Parameters to pass to filters-initializer goroutine
 type filtersInitializerParams struct {
-	filters map[int]string
+	filters []Filter
 }
 
 // Dnsfilter holds added rules and performs hostname matches against the rules
@@ -177,7 +177,7 @@ func (d *Dnsfilter) WriteDiskConfig(c *Config) {
 // SetFilters - set new filters (synchronously or asynchronously)
 // When filters are set asynchronously, the old filters continue working until the new filters are ready.
 //  In this case the caller must ensure that the old filter files are intact.
-func (d *Dnsfilter) SetFilters(filters map[int]string, async bool) error {
+func (d *Dnsfilter) SetFilters(filters []Filter, async bool) error {
 	if async {
 		params := filtersInitializerParams{
 			filters: filters,
@@ -415,42 +415,42 @@ func fileExists(fn string) bool {
 }
 
 // Initialize urlfilter objects
-func (d *Dnsfilter) initFiltering(filters map[int]string) error {
+func (d *Dnsfilter) initFiltering(filters []Filter) error {
 	listArray := []filterlist.RuleList{}
-	for id, dataOrFilePath := range filters {
+	for _, f := range filters {
 		var list filterlist.RuleList
 
-		if id == 0 {
+		if f.ID == 0 {
 			list = &filterlist.StringRuleList{
 				ID:             0,
-				RulesText:      dataOrFilePath,
+				RulesText:      string(f.Data),
 				IgnoreCosmetic: true,
 			}
 
-		} else if !fileExists(dataOrFilePath) {
+		} else if !fileExists(f.FilePath) {
 			list = &filterlist.StringRuleList{
-				ID:             id,
+				ID:             int(f.ID),
 				IgnoreCosmetic: true,
 			}
 
 		} else if runtime.GOOS == "windows" {
 			// On Windows we don't pass a file to urlfilter because
 			//  it's difficult to update this file while it's being used.
-			data, err := ioutil.ReadFile(dataOrFilePath)
+			data, err := ioutil.ReadFile(f.FilePath)
 			if err != nil {
-				return fmt.Errorf("ioutil.ReadFile(): %s: %s", dataOrFilePath, err)
+				return fmt.Errorf("ioutil.ReadFile(): %s: %s", f.FilePath, err)
 			}
 			list = &filterlist.StringRuleList{
-				ID:             id,
+				ID:             int(f.ID),
 				RulesText:      string(data),
 				IgnoreCosmetic: true,
 			}
 
 		} else {
 			var err error
-			list, err = filterlist.NewFileRuleList(id, dataOrFilePath, true)
+			list, err = filterlist.NewFileRuleList(int(f.ID), f.FilePath, true)
 			if err != nil {
-				return fmt.Errorf("filterlist.NewFileRuleList(): %s: %s", dataOrFilePath, err)
+				return fmt.Errorf("filterlist.NewFileRuleList(): %s: %s", f.FilePath, err)
 			}
 		}
 		listArray = append(listArray, list)
@@ -530,7 +530,7 @@ func (d *Dnsfilter) matchHost(host string, qtype uint16) (Result, error) {
 }
 
 // New creates properly initialized DNS Filter that is ready to be used
-func New(c *Config, filters map[int]string) *Dnsfilter {
+func New(c *Config, filters []Filter) *Dnsfilter {
 
 	if c != nil {
 		cacheConf := cache.Config{
@@ -580,6 +580,7 @@ func New(c *Config, filters map[int]string) *Dnsfilter {
 	return d
 }
 
+// Start - register web handlers and start background tasks
 func (d *Dnsfilter) Start() {
 	d.filtersInitializerChan = make(chan filtersInitializerParams, 1)
 	go d.filtersInitializer()
