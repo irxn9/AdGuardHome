@@ -240,12 +240,11 @@ var gctx dnsFilterContext // global dnsfilter context
 
 // Result holds state of hostname check
 type Result struct {
-	IsFiltered bool     `json:",omitempty"` // True if the host name is filtered
-	Reason     Reason   `json:",omitempty"` // Reason for blocking / unblocking
-	Rule       string   `json:",omitempty"` // Original rule text
-	IP         net.IP   `json:",omitempty"` // Not nil only in the case of a hosts file syntax
-	FilterID   int64    `json:",omitempty"` // Filter ID the rule belongs to
-	clientTags []string // This rule applies only to the tagged clients
+	IsFiltered bool   `json:",omitempty"` // True if the host name is filtered
+	Reason     Reason `json:",omitempty"` // Reason for blocking / unblocking
+	Rule       string `json:",omitempty"` // Original rule text
+	IP         net.IP `json:",omitempty"` // Not nil only in the case of a hosts file syntax
+	FilterID   int64  `json:",omitempty"` // Filter ID the rule belongs to
 
 	// for ReasonRewrite:
 	CanonName string   `json:",omitempty"` // CNAME value
