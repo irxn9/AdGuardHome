@@ -239,6 +239,7 @@ func (s *Server) startInternal() error {
 }
 
 // Prepare the object
+// nolint(gocyclo)
 func (s *Server) Prepare(config *ServerConfig) error {
 	if config != nil {
 		s.conf = *config
