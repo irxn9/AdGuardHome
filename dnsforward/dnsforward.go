@@ -2,10 +2,12 @@ package dnsforward
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"net"
 	"net/http"
 	"runtime"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -151,14 +153,17 @@ type FilteringConfig struct {
 // TLSConfig is the TLS configuration for HTTPS, DNS-over-HTTPS, and DNS-over-TLS
 type TLSConfig struct {
 	TLSListenAddr    *net.TCPAddr `yaml:"-" json:"-"`
+	dnsNames         []string     // DNS names from certificate (SAN) or CN value from Subject
+	StrictSNICheck   bool         `yaml:"strict_sni_check" json:"-"`                  // Reject connection if the client uses server name (in SNI) that doesn't match the certificate
 	CertificateChain string       `yaml:"certificate_chain" json:"certificate_chain"` // PEM-encoded certificates chain
 	PrivateKey       string       `yaml:"private_key" json:"private_key"`             // PEM-encoded private key
 
 	CertificatePath string `yaml:"certificate_path" json:"certificate_path"` // certificate file name
 	PrivateKeyPath  string `yaml:"private_key_path" json:"private_key_path"` // private key file name
 
-	CertificateChainData []byte `yaml:"-" json:"-"`
-	PrivateKeyData       []byte `yaml:"-" json:"-"`
+	CertificateChainData []byte          `yaml:"-" json:"-"`
+	PrivateKeyData       []byte          `yaml:"-" json:"-"`
+	Cert                 tls.Certificate `yaml:"-" json:"-"`
 }
 
 // ServerConfig represents server configuration.
@@ -305,13 +310,29 @@ func (s *Server) Prepare(config *ServerConfig) error {
 
 	if s.conf.TLSListenAddr != nil && len(s.conf.CertificateChainData) != 0 && len(s.conf.PrivateKeyData) != 0 {
 		proxyConfig.TLSListenAddr = s.conf.TLSListenAddr
-		keypair, err := tls.X509KeyPair(s.conf.CertificateChainData, s.conf.PrivateKeyData)
+		s.conf.Cert, err = tls.X509KeyPair(s.conf.CertificateChainData, s.conf.PrivateKeyData)
 		if err != nil {
 			return errorx.Decorate(err, "Failed to parse TLS keypair")
 		}
+
+		if s.conf.StrictSNICheck {
+			x, err := x509.ParseCertificate(s.conf.Cert.Certificate[0])
+			if err != nil {
+				return errorx.Decorate(err, "x509.ParseCertificate(): %s", err)
+			}
+			if len(x.DNSNames) != 0 {
+				s.conf.dnsNames = x.DNSNames
+				log.Debug("DNS: using DNS names from certificate's SAN: %v", x.DNSNames)
+				sort.Strings(s.conf.dnsNames)
+			} else {
+				s.conf.dnsNames = append(s.conf.dnsNames, x.Subject.CommonName)
+				log.Debug("DNS: using DNS name from certificate's CN: %s", x.Subject.CommonName)
+			}
+		}
+
 		proxyConfig.TLSConfig = &tls.Config{
-			Certificates: []tls.Certificate{keypair},
-			MinVersion:   tls.VersionTLS12,
+			GetCertificate: s.onGetCertificate,
+			MinVersion:     tls.VersionTLS12,
 		}
 	}
 
@@ -327,6 +348,25 @@ func (s *Server) Prepare(config *ServerConfig) error {
 	// Initialize and start the DNS proxy
 	s.dnsProxy = &proxy.Proxy{Config: proxyConfig}
 	return nil
+}
+
+// Find value in a sorted array
+func findSorted(ar []string, val string) int {
+	i := sort.SearchStrings(ar, val)
+	if i == len(ar) || ar[i] != val {
+		return -1
+	}
+	return i
+}
+
+// Called by 'tls' package when Client Hello is received
+// If the server name (from SNI) supplied by client is incorrect - we terminate the ongoing TLS handshake.
+func (s *Server) onGetCertificate(ch *tls.ClientHelloInfo) (*tls.Certificate, error) {
+	if s.conf.StrictSNICheck && findSorted(s.conf.dnsNames, ch.ServerName) == -1 {
+		log.Info("DNS: TLS: unknown SNI in Client Hello: %s", ch.ServerName)
+		return nil, fmt.Errorf("Invalid SNI")
+	}
+	return &s.conf.Cert, nil
 }
 
 // Stop stops the DNS server
