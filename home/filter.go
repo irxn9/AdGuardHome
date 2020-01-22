@@ -539,6 +539,7 @@ func (filter *filter) LastTimeUpdated() time.Time {
 
 func enableFilters(async bool) {
 	var filters []dnsfilter.Filter
+	var whiteFilters []dnsfilter.Filter
 	if config.DNS.FilteringEnabled {
 		// convert array of filters
 
@@ -567,9 +568,9 @@ func enableFilters(async bool) {
 				ID:       filter.ID,
 				FilePath: filter.Path(),
 			}
-			filters = append(filters, f)
+			whiteFilters = append(whiteFilters, f)
 		}
 	}
 
-	_ = Context.dnsFilter.SetFilters(filters, async)
+	_ = Context.dnsFilter.SetFilters(filters, whiteFilters, async)
 }
