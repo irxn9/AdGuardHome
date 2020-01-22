@@ -443,5 +443,11 @@
     "disable_ipv6_desc": "If this feature is enabled, all DNS queries for IPv6 addresses (type AAAA) will be dropped.",
     "autofix_warning_text": "If you click \"Fix\", AdGuardHome will configure your system to use AdGuardHome DNS server.",
     "autofix_warning_list": "It will perform these tasks: <0>Deactivate system DNSStubListener</0> <0>Set DNS server address to 127.0.0.1</0> <0>Replace symbolic link target of /etc/resolv.conf to /run/systemd/resolve/resolv.conf</0> <0>Stop DNSStubListener (reload systemd-resolved service)</0>",
-    "autofix_warning_result": "As a result all DNS requests from your system will be processed by AdGuardHome by default."
+    "autofix_warning_result": "As a result all DNS requests from your system will be processed by AdGuardHome by default.",
+    "check_title": "Check filtering",
+    "check_desc": "Check if host name is filtered",
+    "check": "Check",
+    "host_filtered": "\"{{key}}\" is currently blocked in your filters.",
+    "host_not_filtered": "\"{{key}}\" is currently unblocked in your filters.",
+    "form_enter_host": "Enter host name"
 }

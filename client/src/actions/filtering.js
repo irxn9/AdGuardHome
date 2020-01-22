@@ -1,5 +1,6 @@
 import { createAction } from 'redux-actions';
 import { showLoading, hideLoading } from 'react-redux-loading-bar';
+import { t } from 'i18next';
 
 import { normalizeFilteringStatus, normalizeRulesTextarea } from '../helpers/helpers';
 import { addErrorToast, addSuccessToast } from './index';
@@ -159,5 +160,29 @@ export const setFiltersConfig = config => async (dispatch, getState) => {
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(setFiltersConfigFailure());
+    }
+};
+
+export const checkHostRequest = createAction('CHECK_HOST_REQUEST');
+export const checkHostFailure = createAction('CHECK_HOST_FAILURE');
+export const checkHostSuccess = createAction('CHECK_HOST_SUCCESS');
+
+export const checkHost = host => async (dispatch) => {
+    dispatch(checkHostRequest());
+    try {
+        const data = await apiClient.checkHost(host);
+        const { filtered } = data;
+        const hostname = Object.values(host)[0];
+
+        if (filtered) {
+            dispatch(addErrorToast({ error: t('host_filtered', { key: hostname }) }));
+        } else {
+            dispatch(addSuccessToast(t('host_not_filtered', { key: hostname })));
+        }
+
+        dispatch(checkHostSuccess());
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(checkHostFailure());
     }
 };

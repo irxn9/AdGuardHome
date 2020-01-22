@@ -79,6 +79,10 @@ const filtering = handleActions(
             ...payload,
             processingSetConfig: false,
         }),
+
+        [actions.checkHostRequest]: state => ({ ...state, processingCheck: true }),
+        [actions.checkHostFailure]: state => ({ ...state, processingCheck: false }),
+        [actions.checkHostSuccess]: state => ({ ...state, processingCheck: false }),
     },
     {
         isModalOpen: false,
@@ -89,6 +93,7 @@ const filtering = handleActions(
         processingConfigFilter: false,
         processingRemoveFilter: false,
         processingSetConfig: false,
+        processingCheck: false,
         isFilterAdded: false,
         filters: [],
         userRules: '',
