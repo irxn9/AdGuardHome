@@ -33,3 +33,7 @@
 .basic-multi-select .select__placeholder {
     color: #adb5bd;
 }
+
+.basic-multi-select .select__menu {
+    z-index: 3;
+}
