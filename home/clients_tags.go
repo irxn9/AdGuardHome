@@ -2,13 +2,13 @@ package home
 
 var clientTags = []string{
 	"device_audio",
+	"device_gameconsole",
 	"device_nas",
 	"device_other",
 	"device_pc",
 	"device_phone",
 	"device_printer",
 	"device_tablet",
-	"device_gameconsole",
 	"device_tv",
 
 	"os_android",
