@@ -48,7 +48,7 @@ class ClientsTable extends Component {
     };
 
     getOptionsWithLabels = options => (
-        options.map(option => ({ value: option, label: this.props.t(`${option}_label`) }))
+        options.map(option => ({ value: option, label: option }))
     );
 
     getClient = (name, clients) => {
@@ -188,7 +188,7 @@ class ClientsTable extends Component {
                         <span className="logs__text">
                             {value.map(tag => (
                                 <div key={tag} title={tag}>
-                                    <Trans>{`${tag}_label`}</Trans>
+                                    {tag}
                                 </div>
                             ))}
                         </span>

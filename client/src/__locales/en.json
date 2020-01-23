@@ -439,14 +439,5 @@
     "autofix_warning_result": "As a result all DNS requests from your system will be processed by AdGuardHome by default.",
     "tags_title": "Tags",
     "tags_desc": "Assign tags for this client to make use of special per-client filter rules",
-    "pc_label": "PC",
-    "phone_label": "Phone",
-    "otherdevice_label": "Other device",
-    "windows_label": "Windows",
-    "linux_label": "Linux",
-    "macos_label": "macOS",
-    "ios_label": "iOS",
-    "android_label": "Android",
-    "printer_label": "Printer",
     "form_select_tags": "Select client tags"
 }
