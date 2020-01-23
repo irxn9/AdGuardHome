@@ -8,6 +8,7 @@ var clientTags = []string{
 	"device_phone",
 	"device_printer",
 	"device_tablet",
+	"device_gameconsole",
 	"device_tv",
 
 	"os_android",
