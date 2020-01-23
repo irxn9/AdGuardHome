@@ -378,13 +378,14 @@ func matchDNSName(dnsNames []string, sni string) bool {
 	if utils.IsValidHostname(sni) != nil {
 		return false
 	}
+
 	if findSorted(dnsNames, sni) != -1 {
 		return true
-	} else {
-		for _, dn := range dnsNames {
-			if matchDomainWildcard(sni, dn) {
-				return true
-			}
+	}
+
+	for _, dn := range dnsNames {
+		if matchDomainWildcard(sni, dn) {
+			return true
 		}
 	}
 	return false
