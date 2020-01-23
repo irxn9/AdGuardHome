@@ -164,8 +164,8 @@ type TLSConfig struct {
 	CertificateChainData []byte `yaml:"-" json:"-"`
 	PrivateKeyData       []byte `yaml:"-" json:"-"`
 
-	cert     tls.Certificate
-	dnsNames []string // DNS names from certificate (SAN) or CN value from Subject
+	cert     tls.Certificate // nolint(structcheck) - linter thinks that this field is unused, while TLSConfig is directly included into ServerConfig
+	dnsNames []string        // nolint(structcheck) // DNS names from certificate (SAN) or CN value from Subject
 }
 
 // ServerConfig represents server configuration.
